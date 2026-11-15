@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Employees</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 0 16px;
+    }
+
+    form {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr auto;
+      gap: 10px;
+      margin: 20px 0;
+    }
+
+    input, button {
+      padding: 10px;
+      font-size: 16px;
+    }
+
+    button {
+      background: #536dfe;
+      color: white;
+      border: 0;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    th, td {
+      padding: 12px;
+      border: 1px solid #ddd;
+      text-align: left;
+    }
+
+    th {
+      background: #536dfe;
+      color: white;
+    }
+
+    @media (max-width: 650px) {
+      form {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Employee List</h1>
+
+  <h2>Add an employee</h2>
+  <form id="employeeForm">
+    <input id="name" type="text" placeholder="Name" required>
+    <input id="role" type="text" placeholder="Role" required>
+    <input id="department" type="text" placeholder="Department" required>
+    <button type="submit">Add employee</button>
+  </form>
+
+  <p id="status">Loading employees...</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Role</th>
+        <th>Department</th>
+      </tr>
+    </thead>
+    <tbody id="employeeRows"></tbody>
+  </table>
+
+  <script>
+    async function loadEmployees() {
+      const status = document.getElementById('status');
+
+      try {
+        const response = await fetch('/employees');
+        if (!response.ok) throw new Error('Could not load employees');
+
+        const employees = await response.json();
+        document.getElementById('employeeRows').innerHTML = employees.map(employee => `
+          <tr>
+            <td>${employee.id}</td>
+            <td>${employee.name}</td>
+            <td>${employee.role}</td>
+            <td>${employee.department}</td>
+          </tr>
+        `).join('');
+
+        status.textContent = '';
+      } catch (error) {
+        status.textContent = error.message;
+      }
+    }
+
+    document.getElementById('employeeForm').addEventListener('submit', async event => {
+      event.preventDefault();
+
+      const employee = {
+        name: document.getElementById('name').value.trim(),
+        role: document.getElementById('role').value.trim(),
+        department: document.getElementById('department').value.trim()
+      };
+
+      try {
+        const response = await fetch('/employees', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(employee)
+        });
+
+        if (!response.ok) throw new Error('Could not add employee');
+
+        event.target.reset();
+        document.getElementById('status').textContent = 'Employee added.';
+        await loadEmployees();
+      } catch (error) {
+        document.getElementById('status').textContent = error.message;
+      }
+    });
+
+    loadEmployees();
+  </script>
+</body>
+</html>
